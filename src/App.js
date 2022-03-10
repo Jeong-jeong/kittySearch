@@ -1,6 +1,10 @@
-import { SearchInput, SearchResult, ImageInfo } from "./components/index.js";
+import {
+  SearchInput,
+  SearchResult,
+  ImageInfo,
+  ToggleDarkmode,
+} from "./components/index.js";
 import { api } from "./utils/api.js";
-console.log("app is running!");
 
 export default class App {
   $target = null;
@@ -8,6 +12,11 @@ export default class App {
 
   constructor($target) {
     this.$target = $target;
+
+    this.ToggleDarkmode = new ToggleDarkmode({
+      $target,
+      onClick: () => {},
+    });
 
     this.searchInput = new SearchInput({
       $target,
