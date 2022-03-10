@@ -22,6 +22,11 @@ body {
   transition: background 300ms, color 300ms;
 }
 
+body.dark .ImageInfo .content-wrapper {
+  background-color: var(--color-dark);
+  color: var(--color-light);
+}
+
 *,
 *:before,
 *:after {
@@ -118,6 +123,10 @@ dd {
 @media screen and (max-width: 768px) {
   .SearchResult {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ImageInfo .content-wrapper {
+    width: 100vw;
   }
 }
 
