@@ -3,8 +3,21 @@ const API_ENDPOINT =
 
 export const api = {
   fetchCats: async (keyword) => {
-    return fetch(`${API_ENDPOINT}/api/cats/search?q=${keyword}`).then((res) =>
-      res.json()
-    );
+    try {
+      const result = await fetch(
+        `${API_ENDPOINT}/api/cats/search?q=${keyword}`
+      );
+      if (result.ok) {
+        return result.json();
+      } else {
+        const errorData = await result.json();
+        throw errorData;
+      }
+    } catch (e) {
+      throw {
+        status: e.status,
+        message: e.message,
+      };
+    }
   },
 };

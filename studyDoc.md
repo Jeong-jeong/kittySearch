@@ -18,3 +18,27 @@
   // ...생략
   }
   ```
+
+- API fetch 코드를 async , await 문을 이용하여 수정하기. 해당 코드들은 에러가 났을 경우를 대비해서 적절히 처리 분기.
+  - `필수` API 의 status code 에 따라 에러 메시지를 분리하여 작성.
+
+```js
+fetchCats: async (keyword) => {
+    try {
+      const result = await fetch(
+        `${API_ENDPOINT}/api/cats/search?q=${keyword}`
+      );
+      if (result.ok) { // result.ok 일 때 return
+        return result.json();
+      } else {
+        const errorData = await result.json();
+        throw errorData;
+      }
+    } catch (e) { // 에러가 났을 때 throw 한 에러 캐시 후 status, message 보여주기
+      throw {
+        status: e.status,
+        message: e.message,
+      };
+    }
+  },
+```
