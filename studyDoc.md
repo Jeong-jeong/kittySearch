@@ -123,15 +123,6 @@ SearchResult에 작성된 grid는 최소 width가 250으로 정해져 있었지�
   --text-color: #000000;
 }
 
-@media (prefers-color-scheme: dark) {
-  /* OS의 다크모드 활성화 여부에 따라 동작 */
-  :root {
-    --color-mode: "dark";
-    --background: var(--color-dark);
-    --text-color: var(--color-light);
-  }
-}
-
 .dark {
   /* 유저 다크모드 toggle */
   background-color: var(--color-dark);
@@ -160,15 +151,15 @@ setItem(
 `toggleMode 함수`는 body와 버튼의 스타일을 변경하고, 로컬 스토리지에 모드 정보를 업데이트한다.
 
 ```js
-toggleMode() {
-  const body = document.querySelector("body");
-  body.classList.toggle("dark");
-  this.$ToggleDarkmode.classList.toggle("dark");
+  toggleMode() {
+    const body = document.querySelector("body");
+    body.classList.toggle("dark");
+    this.$ToggleDarkmode.classList.toggle("dark");
 
-  const checkHasDark = body.classList.contains("dark");
-  this.$ToggleDarkmode.innerText = checkHasDark
-    ? "다크모드 🌑"
-    : "라이트 모드 🌕";
-  setItem(COLOR_MODE_KEY, checkHasDark ? "dark" : "light");
-}
+    const checkHasDark = body.classList.contains("dark");
+    this.$ToggleDarkmode.innerText = checkHasDark
+      ? "라이트 모드 🌕"
+      : "다크모드 🌑";
+    setItem(COLOR_MODE_KEY, checkHasDark ? "dark" : "light");
+  }
 ```

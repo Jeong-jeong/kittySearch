@@ -26,20 +26,20 @@ export default class ToggleDarkmode {
 
     const checkHasDark = body.classList.contains("dark");
     this.$ToggleDarkmode.innerText = checkHasDark
-      ? "다크모드 🌑"
-      : "라이트 모드 🌕";
+      ? "라이트 모드 🌕"
+      : "다크모드 🌑";
     setItem(COLOR_MODE_KEY, checkHasDark ? "dark" : "light");
   }
 
   render() {
     const body = document.querySelector("body");
     const getStorageMode = getItem(COLOR_MODE_KEY);
-    body.classList.add(getStorageMode === "dark" ? "dark" : "light");
-    this.$ToggleDarkmode.classList.add(
-      getStorageMode === "dark" ? "dark" : "light"
-    );
+    if (getStorageMode === "dark") {
+      body.classList.add("dark");
+      this.$ToggleDarkmode.classList.add("dark");
+    }
     this.$ToggleDarkmode.innerText =
-      getStorageMode === "dark" ? "다크모드 🌑" : "라이트 모드 🌕";
+      getStorageMode === "dark" ? "라이트 모드 🌕" : "다크모드 🌑";
     this.$target.appendChild(this.$ToggleDarkmode);
 
     this.$ToggleDarkmode.addEventListener("click", () => {

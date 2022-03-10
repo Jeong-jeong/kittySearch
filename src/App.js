@@ -15,7 +15,6 @@ export default class App {
 
     this.ToggleDarkmode = new ToggleDarkmode({
       $target,
-      onClick: () => {},
     });
 
     this.searchInput = new SearchInput({

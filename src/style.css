@@ -6,15 +6,6 @@
   --text-color: #000000;
 }
 
-@media (prefers-color-scheme: dark) {
-  /* OS의 다크모드 활성화 여부에 따라 동작 */
-  :root {
-    --color-mode: "dark";
-    --background: var(--color-dark);
-    --text-color: var(--color-light);
-  }
-}
-
 /* 유저 다크모드 toggle */
 .dark {
   background-color: var(--color-dark);
