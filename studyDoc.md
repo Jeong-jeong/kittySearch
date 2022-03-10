@@ -1,6 +1,6 @@
 ## 구현 명세
 
-1. 코드 구조
+### 1. 코드 구조
 
 - ES6 모듈 형태로 코드 변경하기
   script를 독립된 스코프를 가진 모듈 단위로 변경하려면 script 태그의 type을 module로 변경해줘야 한다.
@@ -42,3 +42,69 @@ fetchCats: async (keyword) => {
     }
   },
 ```
+
+### 2. HTML, CSS
+
+- 시멘틱 코드로 변경하기
+
+**ImageInfo**
+
+기존에 div 태그들을 h1, button, strong, dl 태그 등을 사용해 시멘틱 하게 변경하였다.
+특히 description 부분은 A는 B 형태로 사전 형식인데, 단순 div로 나뉘어 있어 dl, dt, dd로 변경하였다.
+시멘틱 태그로 변경하면서 기존의 css reset 처리가 되어 있지 않아 css 파일에 추가하였다.
+
+```js
+<div class="content-wrapper">
+  <h1 class="title">
+    <strong>${name}</strong>
+    <button class="close">x</button>
+  </h1>
+  <img src="${url}" alt="${name}"/>
+  <dl class="description">
+    <dt>성격:<dt>
+      <dd>${temperament}</dd>
+  </dl>
+  <dl class="description">
+    <dt>태생:<dt>
+      <dd>${origin}</dd>
+</div>`;
+```
+
+**SearchResult**
+
+SearchResult의 리스트들을 div -> li로 변경하고 상위 태그를 ul로 변경하였다.
+
+```js
+  this.$searchResult = document.createElement("ul");
+
+  // ... 생략
+  <li class="item">
+    <img src=${cat.url} alt=${cat.name} />
+  </li>
+```
+
+- 반응형 처리하기.
+
+```css
+@media screen and (max-width: 992px) {
+  .SearchResult {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .SearchResult {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .SearchResult {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+```
+
+992px 이하: 3개
+768px 이하: 2개
+576px 이하: 1개
