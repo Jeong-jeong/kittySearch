@@ -1,6 +1,8 @@
+import { SearchInput, SearchResult, ImageInfo } from "./components/index.js";
+import { api } from "./utils/api.js";
 console.log("app is running!");
 
-class App {
+export default class App {
   $target = null;
   data = [];
 

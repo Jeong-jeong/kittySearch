@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Programmers 2020 Dev-Matching",
   "main": "index.html",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/Jeong-jeong"
