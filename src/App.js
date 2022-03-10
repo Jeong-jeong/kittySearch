@@ -3,6 +3,7 @@ import {
   SearchResult,
   ImageInfo,
   ToggleDarkmode,
+  Loading,
 } from "./components/index.js";
 import { api } from "./utils/api.js";
 
@@ -19,8 +20,11 @@ export default class App {
 
     this.searchInput = new SearchInput({
       $target,
-      onSearch: (keyword) => {
-        api.fetchCats(keyword).then(({ data }) => this.setState(data));
+      onSearch: async (keyword) => {
+        const loading = new Loading({ $target });
+        const { data } = await api.fetchCats(keyword);
+        this.setState(data);
+        loading.closeLoading();
       },
     });
 
@@ -45,7 +49,6 @@ export default class App {
   }
 
   setState(nextData) {
-    console.log(this);
     this.data = nextData;
     this.searchResult.setState(nextData);
   }

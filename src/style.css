@@ -114,6 +114,37 @@ dd {
   font-size: 20px;
 }
 
+.Loading-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+}
+
+.Loading-wrapper .Loading {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 10px solid #333333;
+  border-bottom: 10px solid mediumaquamarine;
+  animation: spin 1s linear infinite;
+  position: relative;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media screen and (max-width: 992px) {
   .SearchResult {
     grid-template-columns: repeat(3, 1fr);

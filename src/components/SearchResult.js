@@ -21,19 +21,22 @@ export default class SearchResult {
 
   render() {
     this.$searchResult.innerHTML = this.data
-      .map(
-        (cat) => `
-          <li class="item">
+      ?.map(
+        (cat, index) => `
+          <li class="item" data-index=${index}>
             <img src=${cat.url} alt=${cat.name} />
           </li>
         `
       )
       .join("");
 
-    this.$searchResult.querySelectorAll(".item").forEach(($item, index) => {
-      $item.addEventListener("click", () => {
+    this.$searchResult.addEventListener("click", (e) => {
+      // FIXME: 이벤트 중복 호출됨
+      const item = e.target.closest("li");
+      if (item) {
+        const { index } = item.dataset;
         this.onClick(this.data[index]);
-      });
+      }
     });
   }
 }
