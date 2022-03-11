@@ -36,4 +36,12 @@ export const api = {
       return e;
     }
   },
+  fetchRandomCats: async () => {
+    try {
+      const result = await request(`${API_ENDPOINT}/api/cats/random50`);
+      return result;
+    } catch (e) {
+      return e;
+    }
+  },
 };
