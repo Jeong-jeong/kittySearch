@@ -5,15 +5,14 @@ const request = async (url) => {
   try {
     const res = await fetch(url);
     if (res.ok) {
-      return res.json();
+      const { data } = await res.json();
+      return { status: res.status, data };
     } else {
-      const errorData = res.json();
-      throw errorData;
+      throw res;
     }
   } catch (e) {
     throw {
       status: e.status,
-      message: e.message,
     };
   }
 };
@@ -31,7 +30,7 @@ export const api = {
   },
   fetchCatInfo: async (id) => {
     try {
-      const result = await request(`${API_ENDPOINT}/api//cats/${id}`);
+      const result = await request(`${API_ENDPOINT}/api/cats/${id}`);
       return result;
     } catch (e) {
       return e;

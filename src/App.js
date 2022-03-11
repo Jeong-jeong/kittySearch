@@ -22,8 +22,8 @@ export default class App {
       $target,
       onSearch: async (keyword) => {
         const loading = new Loading({ $target });
-        const { data } = await api.fetchCats(keyword);
-        this.setState(data);
+        const response = await api.fetchCats(keyword);
+        this.setState(response);
         loading.closeLoading();
       },
     });

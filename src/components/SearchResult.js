@@ -1,3 +1,5 @@
+import { ErrorMessage } from "../components/index.js";
+
 export default class SearchResult {
   $searchResult = null;
   data = null;
@@ -8,10 +10,23 @@ export default class SearchResult {
     this.$searchResult.className = "SearchResult";
     $target.appendChild(this.$searchResult);
 
+    this.$target = $target;
     this.data = initialData;
     this.onClick = onClick;
 
     this.render();
+
+    this.$searchResult.addEventListener("click", (e) =>
+      this.findIndexWithClick.call(this, e)
+    );
+  }
+
+  findIndexWithClick(e) {
+    const item = e.target.closest("li");
+    if (item) {
+      const { index } = item.dataset;
+      this.onClick(this.data[index]);
+    }
   }
 
   setState(nextData) {
@@ -20,23 +35,20 @@ export default class SearchResult {
   }
 
   render() {
-    this.$searchResult.innerHTML = this.data
-      ?.map(
-        (cat, index) => `
-          <li class="item" data-index=${index}>
-            <img src=${cat.url} alt=${cat.name} />
-          </li>
-        `
-      )
-      .join("");
+    const { data, status } = this.data;
 
-    this.$searchResult.addEventListener("click", (e) => {
-      // FIXME: 이벤트 중복 호출됨
-      const item = e.target.closest("li");
-      if (item) {
-        const { index } = item.dataset;
-        this.onClick(this.data[index]);
-      }
-    });
+    if (status === 200) {
+      this.$searchResult.innerHTML = data
+        ?.map(
+          (cat, index) => `
+            <li class="item" data-index=${index}>
+              <img src=${cat.url} alt=${cat.name} />
+            </li>
+          `
+        )
+        .join("");
+    } else {
+      new ErrorMessage({ $target: this.$target, status });
+    }
   }
 }
