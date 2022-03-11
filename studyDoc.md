@@ -309,6 +309,7 @@ findIndexWithClick(e) {
 }
 ```
 
+바로 display: none을 줘버리면 애니메이션을 넣어도 작동하지 않기 때문에,
 `fadeOut`이 끝날 때 `display: none`이 아닌 hidden을 줘서 **애니메이션이 다 마무리 되고 난 후**, `setTimeout으로 display: none`을 줘서 DOM 요소에서 없앤다.
 
 ```js
@@ -320,3 +321,133 @@ if (!visible) {
   }, variables.animationTime);
 }
 ```
+
+## 4. 검색 페이지
+
+### 검색 페이지 진입 시 input focus 처리
+
+초기화 함수를 만들고(`onInit`) render 메서드에서 실행시켰다.
+
+```js
+// SearchInput.js
+onInit() {
+  this.$searchInput.focus();
+}
+
+render() {
+  this.onInit();
+}
+```
+
+### input 클릭 시 기존 키워드 삭제처리
+
+초기에는 `onResetInputValue` 함수를 따로 만들었는데, **외부에서 Input 값을 변경할 일이 종종 생기자** 새 value를 받고, value를 설정해주는 메서드로 변경했다.
+
+```js
+onSetInputValue(newValue) {
+    this.$searchInput.value = newValue;
+  }
+```
+
+### 필수 검색 결과가 없을 때, UI 처리
+
+```js
+if (status === 200) {
+  // fetching한 데이터의 status code가 200일 때
+      this.$searchResult.innerHTML =
+        data.length > 0
+          ? data.map(순회~~)
+          : `<p class="noContent">검색 결과가 없습니다. 다른 키워드로 입력해주세요 🥲</p>`; // 검색 결과가 존재하지 않을 때
+    } else {
+      // 400, 500 등의 오류가 생겼을 때
+      new ErrorMessage({ $target: this.$target, status });
+    }
+```
+
+### 최근 검색 5개까지 키워드 구현
+
+- 특정 키워드를 누르면 검색.
+- 가장 최근에 검색한 5개의 키워드까지만
+- x 버튼을 누르면 삭제하기
+
+#### 검색 키워드를 5개까지 표시하기
+
+기존에 SearchInput에서 만들어놨던 로직을 재활용하면 돼서 편했다. SerchInput의 `onSearch` 메서드는 **검색 후 keyword를 받아 데이터를 fetching 한다**.
+로직을 살짝 바꿔 App 컴포넌트에서 관리할 keywords 상태를 만들었다. 이후 onSearch에서 keyword 검색이 발생하면 3가지 정도의 분기에 따라 keywords를 저장한다.
+
+1. keywords 배열에 이미 **검색한 키워드가 있는 경우**
+   기존의 keywords를 그대로 사용한다.
+
+2. keywords 배열에 이미 **검색한 키워드가 없는 경우**
+   이때는 keywords **배열의 길이가 5가 넘는지 안넘는지** 구분해줘야 한다. 넘는다면 `후입선출` 로직으로 가장 오래된 데이터를 shift로 지우고 새 데이터를 넣는다. 넘지 않으면 그대로 새 keyword를 마지막에 넣어준다. 데이터를 바꿀 때는 **불변성을 유지하는 게 중요하므로** 항상 새 참조값으로 변경해줘야 한다! 또 항상 setState를 통해 상태를 변경해야 한다.
+
+   ```js
+   if (hasSameKeyword) {
+     newKeywords = [...this.keywords];
+   } else {
+     if (checkOver5Length) {
+       newKeywords = [...this.keywords];
+       newKeywords.shift();
+       newKeywords.push(keyword);
+     } else {
+       newKeywords = [...this.keywords, keyword];
+     }
+   }
+   const nextState = {
+     data: response,
+     keywords: newKeywords,
+   };
+   this.setState(nextState);
+   ```
+
+   #### 키워드를 누를 경우 검색, x버튼을 누를 경우 삭제
+
+KeywordList 컴포넌트는 `$target`, `initialState`, `onDeleteKeyword`, `onClickKeyword` 4가지를 인수로 받는다. 외부에서 메서드를 받는 이유는 삭제 메서드에선 keywords를 보관하다 로컬 스토리지에 저장해야하기 때문이고, 클릭 메서드에선 SearchInput을 건드려야 하기 때문에 컴포넌트 내부는 최대한 순수하게 작성하고자 노력했다.
+
+```js
+// App.js
+this.keywordList = new keywordList({
+  $target,
+  initialState: this.keywords,
+  onDeleteKeyword: (deletedKeywordList) => {
+    this.setState({
+      data: this.data,
+      keywords: deletedKeywordList,
+    });
+  },
+  onClickKeyword: (keyword) => {
+    this.searchInput.onSetInputValue(keyword);
+    this.searchInput.onSearch(keyword);
+  },
+});
+```
+
+삭제 메서드에선 처음에 filter로 클릭한 키워드와 같은 것만 삭제하려 했는데, **중복으로 같은 keyword가 있을 경우 다 삭제**되는 문제가 있었다. 따라서 `findIndex`로 **중복된 값중 오래된 value 한 개만 삭제**하도록 구현했다.
+
+```js
+// KeywordList.js
+this.$keywordList.addEventListener("click", (e) => {
+  switch (e.target.className) {
+    case "KeywordClose":
+      const button = e.target.closest("button");
+
+      if (button) {
+        const findIndex = this.data.findIndex((v) => v === button.value);
+        const newData = this.data.filter((v, i) => i !== findIndex);
+        onDeleteKeyword(newData);
+      }
+      break;
+    case "KeywordButton":
+      onClickKeyword(e.target.value);
+      break;
+  }
+});
+```
+
+### 새로 고침 시 마지막 검색 화면 유지
+
+### 50마리 랜덤 고양이 사진 뿌리기
+
+### 이미지 lazy 로딩 처리하기
+
+### 고양이 사진 hover 시 이름 노출

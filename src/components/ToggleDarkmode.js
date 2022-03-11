@@ -1,5 +1,5 @@
 import { getItem, setItem } from "../utils/localStorage.js";
-const COLOR_MODE_KEY = "COLOR_MODE";
+import { localKey } from "../utils/variable.js";
 
 export default class ToggleDarkmode {
   constructor({ $target }) {
@@ -13,8 +13,10 @@ export default class ToggleDarkmode {
 
     // 첫 렌더 시 storage에 값이 있다면 해당 값으로 변경, 없으면 OS 모드로 저장
     setItem(
-      COLOR_MODE_KEY,
-      getItem(COLOR_MODE_KEY) ? getItem(COLOR_MODE_KEY) : this.currentMode
+      localKey.COLOR_MODE_KEY,
+      getItem(localKey.COLOR_MODE_KEY)
+        ? getItem(localKey.COLOR_MODE_KEY)
+        : this.currentMode
     );
     this.render();
   }
@@ -28,12 +30,12 @@ export default class ToggleDarkmode {
     this.$ToggleDarkmode.innerText = checkHasDark
       ? "라이트 모드 🌕"
       : "다크모드 🌑";
-    setItem(COLOR_MODE_KEY, checkHasDark ? "dark" : "light");
+    setItem(localKey.COLOR_MODE_KEY, checkHasDark ? "dark" : "light");
   }
 
   render() {
     const body = document.querySelector("body");
-    const getStorageMode = getItem(COLOR_MODE_KEY);
+    const getStorageMode = getItem(localKey.COLOR_MODE_KEY);
     if (getStorageMode === "dark") {
       body.classList.add("dark");
       this.$ToggleDarkmode.classList.add("dark");
