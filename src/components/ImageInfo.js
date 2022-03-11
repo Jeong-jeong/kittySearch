@@ -1,6 +1,7 @@
 import { Loading } from "../components/index.js";
 import { api } from "../utils/api.js";
-
+import { debounce } from "../utils/debounce.js";
+import { variables } from "../utils/variable.js";
 export default class ImageInfo {
   $imageInfo = null;
   data = null;
@@ -12,7 +13,7 @@ export default class ImageInfo {
     this.$target = $target;
     $target.appendChild($imageInfo);
 
-    this.data = data; // { visible: false, image: null }
+    this.data = data;
     this.render();
   }
 
@@ -20,22 +21,47 @@ export default class ImageInfo {
     const loading = new Loading({ $target: this.$target });
     const { image } = nextData;
 
-    if (image) {
-      const { id } = image;
-      const { data } = await api.fetchCatInfo(id);
-      console.log(data, "data");
-      const { origin, temperament } = data;
-      const newData = {
-        ...nextData,
-        image: { ...nextData.image, origin, temperament },
-      };
-      this.data = newData;
-    } else {
-      this.data = nextData;
-    }
+    await this.onFetchCatInfo(image, nextData);
 
     loading.closeLoading();
     this.render();
+  }
+
+  async onFetchCatInfo(image, nextData) {
+    try {
+      if (image) {
+        const { id } = image;
+        const { status, data } = await api.fetchCatInfo(id);
+        if (status === 200) {
+          const { origin, temperament } = data;
+          const newData = {
+            status,
+            ...nextData,
+            image: { ...nextData.image, origin, temperament },
+          };
+          this.data = newData;
+        } else {
+          throw {
+            status,
+          };
+        }
+      } else {
+        // @NOTE: 모달을 닫을 때 처리
+        this.data = nextData;
+      }
+    } catch (e) {
+      this.data = { ...nextData, status: e.status };
+    }
+  }
+
+  onClose(e) {
+    if (e.target.className === "ImageInfo" || e.target.className === "close") {
+      this.toggleModal();
+    }
+  }
+
+  onKeydownClose(e) {
+    if (e.key === "Escape") this.toggleModal();
   }
 
   toggleModal() {
@@ -43,11 +69,14 @@ export default class ImageInfo {
   }
 
   render() {
-    if (this.data.visible) {
-      const { name, url, temperament, origin } = this.data.image;
+    const { status, visible, image } = this.data;
+    if (visible || status === 200) {
+      this.$imageInfo.classList.remove("fadeOut");
+      this.$imageInfo.style.display = "block";
+      const { name, url, temperament, origin } = image;
 
       this.$imageInfo.innerHTML = `
-        <div class="content-wrapper">
+        <div class="content-wrapper" tabindex="0">
           <h1 class="title">
             <strong>${name}</strong>
             <button class="close">x</button>
@@ -61,28 +90,22 @@ export default class ImageInfo {
             <dt>태생:<dt> 
               <dd>${origin}</dd>
         </div>`;
-      this.$imageInfo.style.display = "block";
 
-      const closeButton = document.querySelector(".close");
-      closeButton.addEventListener("click", (e) => {
-        // 클로즈 버튼은 이벤트가 안쌓임
-        this.toggleModal();
-      });
+      this.$imageInfo?.addEventListener("click", (e) => this.onClose(e));
+      const $contentWrapper = document.querySelector(".content-wrapper");
+      $contentWrapper.focus();
 
-      // this.$imageInfo?.addEventListener("click", (e) => {
-      //   e.stopPropagation();
-      //   // FIXME: 이벤트 쌓임
-      //   if (e.target.className === "ImageInfo") {
-      //     this.toggleModal();
-      //   }
-      // });
-
-      // document.addEventListener("keydown", (e) => {
-      //   // FIXME: 이벤트 쌓임
-      //   if (e.key === "Escape") this.toggleModal();
-      // });
+      $contentWrapper.addEventListener(
+        "keydown",
+        debounce((e) => {
+          this.onKeydownClose(e);
+        }, variables.keyboardEventTime)
+      );
     } else {
-      this.$imageInfo.style.display = "none";
+      this.$imageInfo.classList.add("fadeOut");
+      setTimeout(() => {
+        this.$imageInfo.style.display = "none";
+      }, variables.animationTime);
     }
   }
 }

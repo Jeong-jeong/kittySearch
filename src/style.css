@@ -84,6 +84,11 @@ dd {
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 500ms;
+}
+
+.ImageInfo.fadeOut {
+  animation: fadeOut 500ms;
 }
 
 .ImageInfo .title {
@@ -164,5 +169,23 @@ dd {
 @media screen and (max-width: 576px) {
   .SearchResult {
     grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
   }
 }

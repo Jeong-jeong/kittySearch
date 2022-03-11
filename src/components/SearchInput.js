@@ -1,4 +1,5 @@
 import { debounce } from "../utils/debounce.js";
+import { variables } from "../utils/variable.js";
 
 export default class SearchInput {
   constructor({ $target, onSearch }) {
@@ -15,7 +16,7 @@ export default class SearchInput {
       "keyup",
       debounce((e) => {
         this.onSearchResult.call(this, e);
-      }, 500)
+      }, variables.animationTime)
     );
   }
 

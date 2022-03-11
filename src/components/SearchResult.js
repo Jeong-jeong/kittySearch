@@ -17,15 +17,16 @@ export default class SearchResult {
     this.render();
 
     this.$searchResult.addEventListener("click", (e) =>
-      this.findIndexWithClick.call(this, e)
+      this.findIndexWithClick(e)
     );
   }
 
   findIndexWithClick(e) {
+    const { data } = this.data;
     const item = e.target.closest("li");
     if (item) {
       const { index } = item.dataset;
-      this.onClick(this.data[index]);
+      this.onClick(data[index]);
     }
   }
 
