@@ -30,24 +30,46 @@ export default class SearchResult {
     }
   }
 
+  lazyLoadObserver() {
+    const options = { threshold: 0.5 };
+    const callback = (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          observer.unobserve(entry.target);
+          entry.target.src = entry.target.dataset.src;
+        }
+      });
+    };
+    const io = new IntersectionObserver(callback, options);
+    const lazyImages = Array.from(document.querySelectorAll(".lazy"));
+    lazyImages.forEach((image) => {
+      io.observe(image);
+    });
+  }
+
   setState(nextData) {
     this.data = nextData;
     this.render();
+    this.lazyLoadObserver();
   }
 
   render() {
     const { data, status } = this.data;
 
     if (status === 200) {
-      this.$searchResult.innerHTML = data
-        ?.map(
-          (cat, index) => `
+      this.$searchResult.innerHTML =
+        data.length > 0
+          ? data
+              ?.map(
+                (cat, index) => `
             <li class="item" data-index=${index}>
-              <img src=${cat.url} alt=${cat.name} />
+              <img class="lazy" data-src=${cat.url} alt=${cat.name} />
+			        <span class="Tooltip">${cat.name}</span>
             </li>
           `
-        )
-        .join("");
+              )
+              .join("")
+          : `<p class="noContent">검색 결과가 없습니다. 다른 키워드로 입력해주세요 🥲</p>`;
     } else {
       new ErrorMessage({ $target: this.$target, status });
     }
