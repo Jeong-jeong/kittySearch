@@ -1,21 +1,25 @@
-const TEMPLATE = '<input type="text">';
+import { debounce } from "../utils/debounce.js";
 
 export default class SearchInput {
   constructor({ $target, onSearch }) {
     const $searchInput = document.createElement("input");
     this.$searchInput = $searchInput;
-    this.$searchInput.placeholder = "고양이를 검색해보세요.|";
+    this.onSearch = onSearch;
+    this.$searchInput.placeholder = "고양이를 검색해보세요.";
 
     $searchInput.className = "SearchInput";
     $target.appendChild($searchInput);
 
-    $searchInput.addEventListener("keyup", (e) => {
-      if (e.keyCode === 13) {
-        onSearch(e.target.value);
-      }
-    });
-
-    console.log("SearchInput created.", this);
+    // @NOTE: Enter가 두번 보내지는 것을 방지하기 위해 디바운싱 사용
+    $searchInput.addEventListener(
+      "keyup",
+      debounce((e) => {
+        this.onSearchResult.call(this, e);
+      }, 500)
+    );
   }
-  render() {}
+
+  onSearchResult(e) {
+    if (e.key === "Enter") this.onSearch(e.target.value);
+  }
 }
