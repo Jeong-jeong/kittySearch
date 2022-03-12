@@ -373,36 +373,40 @@ if (status === 200) {
 #### 검색 키워드를 5개까지 표시하기
 
 기존에 SearchInput에서 만들어놨던 로직을 재활용하면 돼서 편했다. SerchInput의 `onSearch` 메서드는 **검색 후 keyword를 받아 데이터를 fetching 한다**.
-로직을 살짝 바꿔 App 컴포넌트에서 관리할 keywords 상태를 만들었다. 이후 onSearch에서 keyword 검색이 발생하면 3가지 정도의 분기에 따라 keywords를 저장한다.
+로직을 살짝 바꿔 App 컴포넌트에서 관리할 `keywords` 상태를 만들었다. 이후 onSearch에서 keyword 검색이 발생하면 **3가지 정도의 분기에 따라** keywords를 저장한다.
 
 1. keywords 배열에 이미 **검색한 키워드가 있는 경우**
    기존의 keywords를 그대로 사용한다.
 
 2. keywords 배열에 이미 **검색한 키워드가 없는 경우**
-   이때는 keywords **배열의 길이가 5가 넘는지 안넘는지** 구분해줘야 한다. 넘는다면 `후입선출` 로직으로 가장 오래된 데이터를 shift로 지우고 새 데이터를 넣는다. 넘지 않으면 그대로 새 keyword를 마지막에 넣어준다. 데이터를 바꿀 때는 **불변성을 유지하는 게 중요하므로** 항상 새 참조값으로 변경해줘야 한다! 또 항상 setState를 통해 상태를 변경해야 한다.
+   이때는 keywords **배열의 길이가 5가 넘는지 안 넘는지** 구분해줘야 한다.
+   - 넘는다면 `후입선출` 로직으로 가장 오래된 데이터를 shift로 지우고 새 데이터를 넣는다. - 넘지 않으면 그대로 새 keyword를 마지막에 넣어준다.
 
-   ```js
-   if (hasSameKeyword) {
-     newKeywords = [...this.keywords];
-   } else {
-     if (checkOver5Length) {
-       newKeywords = [...this.keywords];
-       newKeywords.shift();
-       newKeywords.push(keyword);
-     } else {
-       newKeywords = [...this.keywords, keyword];
-     }
-   }
-   const nextState = {
-     data: response,
-     keywords: newKeywords,
-   };
-   this.setState(nextState);
-   ```
+데이터를 바꿀 때는 **불변성을 유지하는 게 중요하므로** 항상 새 참조값으로 변경해줘야 한다! 또 항상 setState를 통해 상태를 변경해야 한다.
 
-   #### 키워드를 누를 경우 검색, x버튼을 누를 경우 삭제
+```js
+if (hasSameKeyword) {
+  newKeywords = [...this.keywords];
+} else {
+  if (checkOver5Length) {
+    newKeywords = [...this.keywords];
+    newKeywords.shift();
+    newKeywords.push(keyword);
+  } else {
+    newKeywords = [...this.keywords, keyword];
+  }
+}
+const nextState = {
+  data: response,
+  keywords: newKeywords,
+};
+this.setState(nextState);
+```
 
-KeywordList 컴포넌트는 `$target`, `initialState`, `onDeleteKeyword`, `onClickKeyword` 4가지를 인수로 받는다. 외부에서 메서드를 받는 이유는 삭제 메서드에선 keywords를 보관하다 로컬 스토리지에 저장해야하기 때문이고, 클릭 메서드에선 SearchInput을 건드려야 하기 때문에 컴포넌트 내부는 최대한 순수하게 작성하고자 노력했다.
+#### 키워드를 누를 경우 검색, x버튼을 누를 경우 삭제
+
+KeywordList 컴포넌트는 `$target`, `initialState`, `onDeleteKeyword`, `onClickKeyword` 4가지를 인수로 받는다.
+외부에서 메서드를 받는 이유는 `삭제 메서드`에선 keywords를 보관하다 로컬 스토리지에 저장해야하기 때문이고, `클릭 메서드`에선 `SearchInput`을 건드려야 하기 때문에 컴포넌트 내부는 최대한 순수하게 작성하고자 노력했다.
 
 ```js
 // App.js
@@ -422,7 +426,7 @@ this.keywordList = new keywordList({
 });
 ```
 
-삭제 메서드에선 처음에 filter로 클릭한 키워드와 같은 것만 삭제하려 했는데, **중복으로 같은 keyword가 있을 경우 다 삭제**되는 문제가 있었다. 따라서 `findIndex`로 **중복된 값중 오래된 value 한 개만 삭제**하도록 구현했다.
+`삭제 메서드`에선 처음에 filter로 클릭한 키워드와 같은 것만 삭제하려 했는데, **중복으로 같은 keyword가 있을 경우 다 삭제**되는 문제가 있었다. 따라서 `findIndex`로 **중복된 값중 오래된 value 한 개만 삭제**하도록 구현했다.
 
 ```js
 // KeywordList.js
@@ -446,8 +450,167 @@ this.$keywordList.addEventListener("click", (e) => {
 
 ### 새로 고침 시 마지막 검색 화면 유지
 
+마지막 검색화면을 유지하기 위해선 결과 화면에 뿌려줄 `키워드 목록`, input에 넣을 `마지막 검색 키워드`가 필요하다.
+
+```js
+// App.js
+keywords = [];
+lastSearchKeyword = "";
+```
+
+검색 이벤트가 일어날 때마다 setState가 발생하면 `localStorage에 저장`하고 App이 렌더될 때마다 `localStorage` 값을 가져온다.
+
+```js
+// App.js
+setState(nextData) {
+    const { data, keywords } = nextData;
+    this.data = data;
+    this.keywords = keywords;
+    this.searchResult.setState(data);
+    this.keywordList.setState(keywords);
+
+    // @NOTE: 로컬 스토리지에 변경된 데이터를 저장한다.
+    const setLocalStorage = {
+      keywords,
+      lastSearchKeyword: this.lastSearchKeyword,
+    };
+    setItem(localKey.SEARCH_RESULT_KEY, JSON.stringify(setLocalStorage));
+  }
+```
+
+```js
+// App.js
+// @NOTE: App이 렌더되면 로컬 스토리지에서 값을 가져온 뒤 초기화 시킨다.
+constructor($target) {
+    const getLocalResult = JSON.parse(getItem(localKey.SEARCH_RESULT_KEY));
+    if (getLocalResult) {
+      const { keywords, lastSearchKeyword } = getLocalResult;
+      this.keywords = keywords;
+      this.lastSearchKeyword = lastSearchKeyword;
+    }
+}
+```
+
+두 값을 최상단에서 갖고 있다가 각 컴포넌트에 `initialState`로 넣어주어 첫 렌더 시에 화면에 뿌려준다.
+
+```js
+this.searchInput = new SearchInput({
+  $target,
+  initialState: this.lastSearchKeyword,
+  // ... 생략
+});
+
+this.keywordList = new keywordList({
+  $target,
+  initialState: this.keywords,
+  // ... 생략
+});
+```
+
+이미 **마지막 키워드를 첫 렌더시에 로컬 스토리지에서 가져오므로**, 가져온 값이 존재한다면 SearchInput에서 초기화 시 검색 이벤트를 발생시킨다. 코드 몇 줄로 마지막 검색 화면을 유지할 수 있다니 참 편리하다 ☺️
+
+```js
+// SearchInput.js
+constructor({ $target, initialState, onSearch }) {
+    if (initialState) this.onSearch(initialState);
+}
+```
+
 ### 50마리 랜덤 고양이 사진 뿌리기
+
+App의 setState는 `검색 결과 목록`과 `키워드 목록`을 받아 각 컴포넌트에 저장해주므로, 랜덤 고양이 사진을 받아와 setState를 발생시키면 알아서 유기적으로 동작한다.
+
+```js
+// App.js
+this.randomButton = new RandomButton({
+  $target,
+  fetchRandomCats: async () => {
+    const loading = new Loading({ $target });
+    const response = await api.fetchRandomCats();
+
+    this.setState({
+      data: response,
+      keywords: this.keywords,
+    });
+    loading.closeLoading();
+  },
+});
+```
 
 ### 이미지 lazy 로딩 처리하기
 
+#### 🚀 Troble Shooting
+
+`Lazy loading`이란 viewport에 보일 이미지들만 받고, 나저미 소스들은 대기시키는 것을 의미한다. 어떠한 대상이 viewport에 들어왔는지 지속적으로 관찰해야하기 때문에 동기적으로 작동하는 scroll 이벤트보다 **비동기적으로 작동하는 `InterceptorObserver API` 를 활용**하면 좋다.
+`InterceptionObserver(IO)`는 `target`과 `root(기본 viewport)`의 교차점을 비동기적으로 관찰하는 web API 이다. 인수로 callback과 options을 받아 target이 root에 진입했을 때 처리할 작업을 `callback`에 작성하면 된다.
+**전체적인 프로세스는 img src를 비워뒀다가 교차점에 진입했을 때 data-src에 저장되어 있던 값을 src로 옮겨주는 것**이다.
+
+1. 우선 IO를 생성하고 callback과 options를 선언한다.
+2. img에 lazy 클래스를 붙이고 돌면서 `observe` 메서드로 등록해준다.
+
+```js
+lazyLoadObserver() {
+    const options = { threshold: 0.5 };
+    const callback = (entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          observer.unobserve(entry.target);
+          entry.target.src = entry.target.dataset.src;
+        }
+      });
+    };
+    const io = new IntersectionObserver(callback, options);
+    // @NOTE: 관찰 대상들을 observe 메서드로 등록한다.
+    const lazyImages = Array.from(document.querySelectorAll(".lazy"));
+    lazyImages.forEach((image) => {
+      io.observe(image);
+    });
+  }
+```
+
+3. callback의 첫번째 매개변수인 `entries`엔 각 대상들이 교차점에 진입했는지 여부 뿐만 아니라 다른 것들도 확인이 가능하다.
+   ![image](https://user-images.githubusercontent.com/68528752/157995877-ad390e7f-c1d9-4cf3-8a75-1eda368cda19.png)
+
+4. target이 `isIntersecting`(진입 여부)라면, 이미 진입했다는 뜻이므로 `unobserve(관찰 해제)` 시키고, `data-src`에 저장했던 이미지 경로를 src로 옮긴다.
+   unobserve 시키는 이유는 다시 위로 올렸을 때 같은 액션이 발생하지 않도록 하기 위해서이다.
+
 ### 고양이 사진 hover 시 이름 노출
+
+Tooltip 이라는 태그를 만들고, hover시에 `visibility` 값을 변경한다. visibility를 사용하는 이유는 **visibility가 DOM에 남아있기 때문에 리플로우가 일어나지 않아** 렌더링 최적화에 도움이 된다.
+
+```js
+ <li class="item" data-index=${index}>
+  <img class="lazy" data-src=${cat.url} alt=${cat.name} />
+  <span class="Tooltip">${cat.name}</span> // NOTE: Tooltip 추가
+</li>
+```
+
+```css
+.SearchResult .item:hover .Tooltip {
+  visibility: visible;
+}
+
+.Tooltip {
+  visibility: hidden;
+  position: absolute;
+  min-width: 120px;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--color-dark);
+  color: var(--color-light);
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+}
+
+.Tooltip::after {
+  content: " ";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border-style: solid;
+  border-width: 5px;
+  border-color: var(--color-dark) transparent transparent transparent;
+}
+```
