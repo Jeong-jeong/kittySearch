@@ -1,6 +1,7 @@
 export const variables = {
   animationTime: 500,
   keyboardEventTime: 100,
+  countGetDataOnce: 10,
 };
 
 export const localKey = {

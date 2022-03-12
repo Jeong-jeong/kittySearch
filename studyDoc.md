@@ -614,3 +614,98 @@ Tooltip 이라는 태그를 만들고, hover시에 `visibility` 값을 변경한
   border-color: var(--color-dark) transparent transparent transparent;
 }
 ```
+
+## 5. 스크롤 페이징 구현
+
+부분적으로 받을 수 있는 API가 존재하지 않아 **기존 데이터를 전체적으로 받고 10개씩 끊어서** 불러오게끔 했다.
+
+```js
+// variable.js
+export const variables = {
+  countGetDataOnce: 10, // 한번에 몇개까지 받을지 상수화
+};
+```
+
+스크롤 페이징도 IO를 활용한다. target을 **ul의 가장 마지막에 위치**시키고, IO로 감시하며 교차했을 때 callback 함수를 실행한다. li가 길어지면 알아서 target이 뒤로 밀리기 때문에 데이터를 다 받지 않는 이상 unobserve 시킬 필요가 없다.
+
+```js
+// SearchResult.js
+// @NOTE: 안보이는 target 생성
+this.$lastPage = document.createElement("span");
+this.$lastPage.className = "LastPage";
+$target.appendChild(this.$lastPage);
+```
+
+IO 로직을 설명하기 전에 우선 데이터를 자르는 함수가 필요하다. `combineData`는 원본 데이터를 받고 limit 값에 따라 새 데이터를 리턴한다. 끊어받을 limit 데이터는 인스턴스 프로퍼티를 활용했다.
+
+```js
+  combineData(originData) {
+    // @NOTE: this.dataLimit에 따라 원본 데이터를 자르고 리턴
+    const { data, status } = originData;
+    if (status === 200) {
+      const nextData = [...data].slice(
+        0,
+        this.dataLimit * variables.countGetDataOnce
+      );
+      return { status, data: nextData };
+    } else {
+      return { status, data: data };
+    }
+  }
+```
+
+`combineData`는 **원본 데이터를 변경하는 작업**이기 때문에, setState 함수 내에서 활용되어야 한다. setState가 `외부에서 fetch한 데이터를 저장`할 때도 사용되고, `무한 스크롤 때에도 활용`되므로 두 가지를 잘 구분해야 한다.
+특히 무한스크롤 시에 기존의 data가 변경되므로, **원본 데이터를 저장할 필요가 있다**. 원본 데이터를 받아올 때는 무한 스크롤 시에 데이터 보다 길이가 무조건 크거나 같으므로 그때 저장해준다.
+
+```js
+  setState(nextData) {
+    const { status, data } = nextData;
+    if (status === 200 && data.length > variables.countGetDataOnce) {
+      // @NOTE: 하나의 setState에서 무한스크롤을 위한 처리, 외부에서 데이터 받는 처리 구분
+      // @NOTE: 외부에서 받은 데이터 길이가 무한스크롤 길이보다 크다면 원본 데이터!
+      this.originData = nextData;
+    }
+    this.data = this.combineData(nextData);
+    this.render();
+    this.lazyLoadObserver();
+    this.scrollPagingObserver();
+  }
+```
+
+<br>
+
+IO 로직을 설명할 차례다. 중요한 것은 `IO에서 setState`는 항상 **originData를 인수로 받는다는 것**이다. 그래야만 원본 데이터를 받아 slice가 limit 길이만큼 자를 수가 있다. 이 때문에 originData를 저장하는 작업이 필요했던 것이다.
+target이 뷰포트에 진입했다면 `limit`값을 높이고 `setState`를 실행한다.
+**만약 무한 스크롤 데이터가 이미 다 받아졌다면** target을 `unobserve` 하여 더이상 callback을 실행하지 않도록 한다.
+
+```js
+scrollPagingObserver() {
+    const options = { threshold: 0 };
+    const callback = (entries, observer) => {
+      const { status, data } = this.data;
+      const { data: originList } = this.originData;
+
+      // @NOTE: 받아온 데이터가 원본 데이터 길이와 같다면
+      if (data.length === originList.length) {
+        observer.unobserve(this.$lastPage);
+        return;
+      }
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && status === 200) {
+          this.dataLimit++;
+          this.setState(this.originData);
+        }
+      });
+    };
+    const io = new IntersectionObserver(callback, options);
+    io.observe(this.$lastPage);
+  }
+```
+
+마지막으로 데이터를 불러왔을 때 Lazy-loading 때문에 **첫 렌더링 시 일시적으로 이미지의 alt값이 노출되면서 높이가 줄어든다**. 이는 target이 viewport에 노출될 수 있기 때문에 img의 `최소 height`을 줘서 target이 노출되지 않도록 해야한다.
+
+```css
+.SearchResult img {
+  min-height: 200px;
+}
+```
