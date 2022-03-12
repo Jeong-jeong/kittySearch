@@ -10,8 +10,6 @@ export default class RandomButton {
     this.$RandomButton.title = "랜덤 고양이 사진 불러오기";
     $target.appendChild(this.$RandomButton);
 
-    this.render();
-
     this.$RandomButton.addEventListener(
       "click",
       debounce(() => {
