@@ -5,5 +5,8 @@ test.js
 *.log
 .vscode
 .firebase
+**/.firebaserc
 backend/public/apidoc
 coverage
+/public
+.github
