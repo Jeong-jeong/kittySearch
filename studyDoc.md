@@ -709,3 +709,63 @@ scrollPagingObserver() {
   min-height: 200px;
 }
 ```
+
+## 6. webpack 설정 및 배포
+
+이번에는 firebase를 활용해 배포를 진행했다. firebase는 빌드된 정적파일로 배포가 진행되기 때문에 webpack을 통해 번들링했다. 사실 작은 프로젝트에 너무 거창한 플러그인들을 추가한 것 같은데 실무같은 마음으로 임하고자 다양하게 활용해보았다. 각 플러그인과 로더들의 활용방안은 아래와 같다.
+
+```js
+const HtmlWebpackPlugin = require("html-webpack-plugin"); // html을 읽고 minify 하기 위함
+const MiniCssExtractPlugin = require("mini-css-extract-plugin"); // css를 읽고 따로 추출하기 위함
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin"); // css 파일을 minify 하기 위함
+const { CleanWebpackPlugin } = require("clean-webpack-plugin"); // build 될 때 기존에 남아있던 파일을 삭제하기 위함
+const TerserPlugin = require("terser-webpack-plugin"); // js를 minify, uglify 하기 위함
+```
+
+```js
+const path = require("path");
+
+module.exports = {
+  mode: "production", // production 모드로 해야 파일들이 uglify 된다고 함.
+  entry: "./src/main.js",
+  output: {
+    filename: "main.js",
+    path: path.resolve(__dirname, "public"),
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      // html 파일 추출
+      template: "index.html",
+      inject: true,
+    }),
+    new MiniCssExtractPlugin({}), // css 파일 별도 추출
+    new CleanWebpackPlugin(), // 번들시 기존 public 폴더 내 초기화
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        include: /src/,
+        use: [MiniCssExtractPlugin.loader, "css-loader"], // css 파일을 읽고 따로 추출
+      },
+      {
+        test: /\.html$/,
+        use: [
+          {
+            loader: "html-loader",
+            options: { minimize: true }, // html 파일 minify
+          },
+        ],
+      },
+    ],
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      // css, js minize, js uglify
+      new CssMinimizerPlugin(),
+      new TerserPlugin(),
+    ],
+  },
+};
+```

@@ -58,3 +58,5 @@ $ yarn install
 - [고양이 사진 hover 시 이름 노출하기](https://github.com/Jeong-jeong/kittySearch/blob/main/studyDoc.md#고양이-사진-hover-시-이름-노출)
 
 ### 5. [스크롤 페이징 구현 ⭐️](https://github.com/Jeong-jeong/kittySearch/blob/main/studyDoc.md#5-스크롤-페이징-구현)
+
+### 6. [webpack 설정 및 배포]()
