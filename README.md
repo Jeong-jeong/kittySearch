@@ -59,4 +59,4 @@ $ yarn install
 
 ### 5. [스크롤 페이징 구현 ⭐️](https://github.com/Jeong-jeong/kittySearch/blob/main/studyDoc.md#5-스크롤-페이징-구현)
 
-### 6. [webpack 설정 및 배포]()
+### 6. [webpack 설정 및 배포](https://github.com/Jeong-jeong/kittySearch/blob/main/studyDoc.md#6-webpack-설정-및-배포)
